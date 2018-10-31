@@ -1,0 +1,135 @@
+%{
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+int yyerror();
+%}
+
+%union {
+	float fval ;
+	struct $
+	{
+		  int ival;
+	      float tab[250];
+	}t;
+}
+%error-verbose
+%token <fval> nombre
+%token <fval> Somme 
+%token <fval> Produit
+%token <fval> Moyenne
+%token <fval> Variance
+%token <fval> Max 
+%token <fval> Min
+%token <fval> SI
+%token <fval> OR
+%token <fval> AND
+
+%type <fval> Ligne
+%type <fval> Terme 
+%type <fval> Facteur
+%type <fval> Expr
+%type <fval> Fin
+%type <fval> Fonction
+%type <t> L
+%type <fval> NomF
+%type <fval> Cond
+%type <t> Lcomp
+
+
+
+%%
+Ligne : Expr '\n' { printf(" résultat: %f \n", $1); }
+;
+Expr : Expr '+' Terme {$$ = $1 + $3; }
+| Expr '-' Terme {$$ = $1 - $3; }
+| Terme
+;
+Terme : Terme '*' Facteur { $$ = $1 * $3; }
+| Terme '/' Facteur { $$ = $1 / $3; }
+| Facteur
+;
+Facteur : '-' Facteur  {$$=(-1) * $2;}
+| Fin
+;
+Fin : '(' Expr ')' { $$ = $2; } 
+| nombre 
+| Fonction 
+;
+Fonction : NomF '(' L ')' { 
+	$$=0;
+	for(int i=0 ; i<$3.ival ; i++){ $$+=$3.tab[i]; } 
+	if ($1==1){
+           $$=$$/$3.ival; 
+	}else {
+		if ($1==2){
+             int moy=$$/$3.ival;
+             $$=0;
+             for(int i=0 ; i<$3.ival ; i++){ $$+=pow($3.tab[i]-moy,2); } 
+             $$=$$/$3.ival;	
+		}else{
+			if($1==5){
+				$$=1;
+				for(int i=0 ; i<$3.ival ; i++){ $$*=$3.tab[i]; } 
+			}else{
+				if ($1==3)
+				{
+					$$=$3.tab[0];
+					for(int i=0 ; i<$3.ival ; i++){ if($$>$3.tab[i]){$$=$3.tab[i];} } 
+					
+				}else{
+					if ($1==4)
+					{
+						$$=$3.tab[0];
+						for(int i=0 ; i<$3.ival ; i++){ if($$<$3.tab[i]){$$=$3.tab[i]; } } 
+						
+					}else {
+						if($1==6){
+                            $$=$3.ival;
+						}
+					}
+			   }
+			}
+		}
+	}
+	
+}
+;
+NomF : Somme { $$ = 0; }
+| Moyenne {$$=1;}
+| Variance {$$=2;}
+| Min {$$=3;}
+| Max {$$=4;}
+| Produit {$$=5;}
+| SI {$$=6;}
+;
+Cond : Expr '>' Expr { if ($1>$3){ $$=1 ;}else{$$=0;}}
+| Expr '<' Expr { if ($1<$3){ $$=1 ;}else{$$=0;}}
+| Expr '=' Expr { if ($1==$3){ $$=1 ;}else{$$=0;}}
+| OR '(' Lcomp ')' {
+	    $$=0;
+		for(int i=0 ; i<$3.ival ; i++){ if($3.tab[i]==1){$$=1;}; } 	
+}
+| AND '(' Lcomp ')' {
+	$$=1;
+	for(int i=0 ; i<$3.ival ; i++){ if($3.tab[i]==0){$$=0;}; } 	
+		  
+}
+;
+Lcomp : Lcomp ',' Cond {$$.tab[$$.ival]=$3;  $$.ival++;} 
+| Cond  {$$.ival=0;$$.tab[$$.ival]=$1;$$.ival++;}
+;
+L : L ',' Expr  {$$.tab[$$.ival]=$3;  $$.ival++;} 
+| Cond ',' Expr ',' Expr {if($1==1){$$.ival=$3;}else{$$.ival=$5;}}
+| Expr  {$$.ival=0;$$.tab[$$.ival]=$1;  $$.ival++;}
+;
+
+
+%%
+int main() {
+	yyparse();}
+
+int yyerror(const char * s) {
+    printf("%s\n",s);
+}

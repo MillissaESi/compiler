@@ -1,0 +1,29 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include "yacc.tab.h"
+
+%}
+chiffre [0-9]
+operation [\+-/\*]
+parenthese [\(\)]
+
+%%
+{chiffre}+(\.{chiffre}+)? {yylval.fval=atof(yytext);return nombre;}
+{operation} {return yytext[0];}
+{parenthese} {return yytext[0];}
+moyenne {return Moyenne;}
+somme {return Somme;}
+produit {return Produit;}
+max {return Max;}
+min {return Min;}
+variance {return Variance;}
+or {return OR;}
+and {return AND;}
+si {return SI;}
+\> {return '>'; }
+\< {return '<'; }
+= {return '=' ;}
+\n {return '\n';}
+[a-zA-Z]* {printf(" Le mot est lexiqualement incorrecte\n");};
+%%

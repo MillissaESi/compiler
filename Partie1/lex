@@ -1,0 +1,17 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include "yacc.tab.h"
+
+%}
+chiffre [0-9]
+operation [\+-/\*]
+parenthese [\(\)]
+
+%%
+{chiffre}+(\.{chiffre}+)? {yylval.fval=atof(yytext);return nombre;}
+{operation} {return yytext[0];}
+{parenthese} {return yytext[0];}
+\n {return '\n';}
+[a-zA-Z ]* {printf(" Le mot est lexiqualement incorrecte\n");};
+%%
